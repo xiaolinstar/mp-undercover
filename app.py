@@ -6,11 +6,14 @@ import time
 import random
 import redis
 import json
+import requests
 
 app = Flask(__name__)
 
 # 微信公众号的token，可以从环境变量获取或者硬编码
 WECHAT_TOKEN = os.environ.get('WECHAT_TOKEN', 'your_wechat_token_here')  # 请替换为实际的token
+WECHAT_APP_ID = os.environ.get('WECHAT_APP_ID', 'your_wechat_app_id_here')  # 请替换为实际的AppID
+WECHAT_APP_SECRET = os.environ.get('WECHAT_APP_SECRET', 'your_wechat_app_secret_here')  # 请替换为实际的AppSecret
 
 # Redis连接
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
@@ -41,6 +44,20 @@ WORDS = {
     ]
 }
 
+# 谁是卧底游戏玩法说明
+GAME_INSTRUCTIONS = """谁是卧底游戏玩法：
+1. 至少3人参与游戏，根据人数分配卧底数量：
+   - 3-5人：1个卧底
+   - 6-8人：2个卧底
+   - 9-12人：3个卧底
+2. 创建房间后，其他玩家通过房间号加入
+3. 房主输入"开始游戏"分配词语和角色
+4. 玩家在线下进行描述和讨论
+5. 房主通过"t+序号"投票淘汰玩家
+6. 游戏结束条件：
+   - 所有卧底被淘汰：平民获胜
+   - 卧底数量≥平民数量：卧底获胜"""
+
 
 @app.route('/hello', methods=['GET'])
 def hello_world():
@@ -50,6 +67,105 @@ def hello_world():
 @app.route('/health', methods=['GET'])
 def health_check():
     return 'OK', 200
+
+
+@app.route('/menu', methods=['GET'])
+def show_menu():
+    """显示菜单内容"""
+    menu_text = """谁是卧底游戏菜单：
+1. 创建房间
+2. 加入房间+房间号
+3. 开始游戏
+4. 查看状态
+5. t+序号 (房主投票)
+6. 帮助"""
+    return menu_text
+
+
+@app.route('/create_menu', methods=['POST'])
+def create_custom_menu():
+    """
+    创建自定义菜单
+    根据微信官方文档：https://developers.weixin.qq.com/doc/offiaccount/Custom_Menus/Creating_Custom-Defined_Menu.html
+    """
+    try:
+        # 获取access_token
+        access_token = get_access_token()
+        if not access_token:
+            return {"error": "Failed to get access token"}, 500
+        
+        # 读取菜单配置
+        menu_config_path = os.path.join(os.path.dirname(__file__), 'menu_config.json')
+        with open(menu_config_path, 'r', encoding='utf-8') as f:
+            menu_data = json.load(f)
+        
+        # 调用微信API创建菜单
+        url = f"https://api.weixin.qq.com/cgi-bin/menu/create?access_token={access_token}"
+        response = requests.post(url, json=menu_data)
+        
+        result = response.json()
+        if result.get('errcode') == 0:
+            return {"message": "Menu created successfully"}, 200
+        else:
+            return {"error": f"Failed to create menu: {result}"}, 500
+            
+    except Exception as e:
+        app.logger.error(f"Error creating custom menu: {e}")
+        return {"error": str(e)}, 500
+
+
+@app.route('/get_access_token', methods=['GET'])
+def get_access_token_api():
+    """
+    获取access_token接口（用于调试）
+    """
+    try:
+        access_token = get_access_token()
+        if access_token:
+            return {"access_token": access_token}, 200
+        else:
+            return {"error": "Failed to get access token"}, 500
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+
+def get_access_token():
+    """
+    获取微信access_token
+    根据微信官方文档：https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Get_access_token.html
+    """
+    try:
+        # 检查缓存中是否有有效的access_token
+        cached_token = redis_client.get('wechat_access_token')
+        if cached_token:
+            return cached_token.decode('utf-8')
+        
+        # 请求新的access_token
+        url = f"https://api.weixin.qq.com/cgi-bin/token"
+        params = {
+            'grant_type': 'client_credential',
+            'appid': WECHAT_APP_ID,
+            'secret': WECHAT_APP_SECRET
+        }
+        
+        response = requests.get(url, params=params)
+        result = response.json()
+        
+        if 'access_token' in result:
+            access_token = result['access_token']
+            expires_in = result.get('expires_in', 7200) - 60  # 提前60秒过期
+            
+            # 缓存access_token
+            redis_client.setex('wechat_access_token', expires_in, access_token)
+            
+            return access_token
+        else:
+            app.logger.error(f"Failed to get access token: {result}")
+            return None
+            
+    except Exception as e:
+        app.logger.error(f"Error getting access token: {e}")
+        return None
 
 
 @app.route('/', methods=['GET'])
@@ -114,7 +230,21 @@ def wechat_response():
         elif msg_type == 'event':
             event = root.find('Event').text
             if event == 'subscribe':
-                response_content = "欢迎关注！请输入'创建房间'来创建一个新的谁是卧底游戏房间，或输入'加入房间+房间号'来加入现有房间。"
+                response_content = "欢迎关注！请输入'创建房间'来创建一个新的谁是卧底游戏房间，或输入'加入房间+房间号'来加入现有房间。\n\n回复'谁是卧底'查看游戏玩法"
+            elif event == 'CLICK':
+                event_key = root.find('EventKey').text
+                if event_key == 'WHO_IS_UNDERCOVER':
+                    response_content = GAME_INSTRUCTIONS
+                elif event_key == 'CREATE_ROOM':
+                    response_content = create_room(from_user)
+                elif event_key == 'JOIN_ROOM':
+                    response_content = "请输入'加入房间+房间号'来加入指定房间"
+                elif event_key == 'SHOW_STATUS':
+                    response_content = show_status(from_user)
+                elif event_key == 'CONTACT':
+                    response_content = "如有问题请联系管理员"
+                else:
+                    response_content = "暂不支持此菜单选项"
             else:
                 response_content = "暂不支持此事件类型"
         else:
@@ -141,10 +271,12 @@ def handle_text_message(user_id, content):
     """
     处理文本消息
     """
-    content = content.strip()
+    content = content.strip().lower()
     
     # 处理用户命令
-    if content == '创建房间':
+    if content == '谁是卧底':
+        return GAME_INSTRUCTIONS
+    elif content == '创建房间':
         return create_room(user_id)
     elif content.startswith('加入房间'):
         room_id = content[4:].strip()  # 去掉"加入房间"前缀
@@ -153,9 +285,13 @@ def handle_text_message(user_id, content):
         return start_game(user_id)
     elif content == '查看状态':
         return show_status(user_id)
-    elif content.startswith('投票'):
-        target = content[3:].strip()  # 去掉"投票"前缀
-        return handle_vote(user_id, target)
+    elif content.startswith('t'):
+        # 房主投票，格式为 t+序号
+        try:
+            target_index = int(content[1:])
+            return handle_vote_by_index(user_id, target_index)
+        except ValueError:
+            return "投票格式错误，请使用't+序号'的格式，例如't1'"
     elif content == '帮助':
         return show_help()
     else:
@@ -292,14 +428,14 @@ def start_game(user_id):
         send_message(player, f"游戏开始！\n词语类别：{category}\n您的身份：{role}\n您的词语：{word}\n线下进行描述和讨论，结束后由房主进行最终投票决定胜负")
     
     # 特别提醒房主
-    send_message(room['creator'], f"\n您是房主，请在线下游戏结束后，通过'投票 @某人'的方式来决定被淘汰的玩家")
+    send_message(room['creator'], f"\n您是房主，请在线下游戏结束后，通过't+序号'的方式来决定被淘汰的玩家")
     
     return "success"  # 对于发起者不需要回复
 
 
-def handle_vote(user_id, target):
+def handle_vote_by_index(user_id, target_index):
     """
-    处理房主投票
+    处理房主通过序号投票
     """
     # 获取用户信息
     user_data = get_user(user_id)
@@ -317,16 +453,16 @@ def handle_vote(user_id, target):
     if room['creator'] != user_id:
         return "只有房主才能进行投票"
     
-    # 查找被投票的玩家
-    target_player = None
-    for player in room['players']:
-        player_data = get_user(player)
-        if player_data and target in player_data.get('nickname', ''):
-            target_player = player
-            break
+    # 检查序号是否有效
+    if target_index < 1 or target_index > len(room['players']):
+        return f"序号无效，请输入1-{len(room['players'])}之间的数字"
     
-    if not target_player:
-        return "未找到该玩家，请确认玩家昵称"
+    # 获取目标玩家
+    target_player = room['players'][target_index - 1]
+    
+    # 检查目标玩家是否已被淘汰
+    if target_player in room['eliminated']:
+        return "该玩家已被淘汰"
     
     # 记录被淘汰的玩家
     room['eliminated'].append(target_player)
@@ -334,7 +470,7 @@ def handle_vote(user_id, target):
     
     # 通知结果
     target_data = get_user(target_player)
-    target_nickname = target_data['nickname'] if target_data else f'玩家{room["players"].index(target_player)+1}'
+    target_nickname = target_data['nickname'] if target_data else f'玩家{target_index}'
     notify_players(room_id, f"房主投票决定：{target_nickname}被淘汰")
     
     # 检查游戏是否结束
@@ -382,7 +518,7 @@ def check_game_end(room_id):
 
 def show_status(user_id):
     """
-    显示当前状态
+    显示当前状态，包括用户的序号和昵称
     """
     # 获取用户信息
     user_data = get_user(user_id)
@@ -392,7 +528,14 @@ def show_status(user_id):
     room_id = user_data['current_room']
     room = get_room(room_id)
     
-    status_text = f"房间号：{room_id}\n房间状态：{room['status']}\n房间成员："
+    # 找到当前用户的序号
+    user_index = -1
+    for i, player in enumerate(room['players']):
+        if player == user_id:
+            user_index = i + 1
+            break
+    
+    status_text = f"您的信息：{user_data['nickname']} (序号: {user_index})\n\n房间号：{room_id}\n房间状态：{room['status']}\n房间成员："
     
     for i, player in enumerate(room['players']):
         player_data = get_user(player)
@@ -409,6 +552,10 @@ def show_status(user_id):
         status_text += f"\n\n当前轮次：第{room['current_round']}轮"
         status_text += f"\n卧底人数：{len(room.get('undercovers', []))}"
         status_text += f"\n已淘汰：{len(room.get('eliminated', []))}人"
+        
+        # 如果是房主，提示投票方式
+        if room['creator'] == user_id:
+            status_text += f"\n\n您是房主，可通过't+序号'投票淘汰玩家"
     
     return status_text
 
@@ -418,12 +565,13 @@ def show_help():
     显示帮助信息
     """
     help_text = """谁是卧底游戏命令：
-1. 创建房间 - 创建新的游戏房间
-2. 加入房间+房间号 - 加入指定房间（例如：加入房间1234）
-3. 开始游戏 - 房主开始游戏（至少3人）
-4. 查看状态 - 查看当前房间状态
-5. 投票 @某人 - 房主投票给指定玩家（游戏结束后决定胜负）
-6. 帮助 - 显示此帮助信息"""
+1. 谁是卧底 - 查看游戏玩法
+2. 创建房间 - 创建新的游戏房间
+3. 加入房间+房间号 - 加入指定房间（例如：加入房间1234）
+4. 开始游戏 - 房主开始游戏（至少3人）
+5. 查看状态 - 查看当前房间状态和个人信息
+6. t+序号 - 房主投票给指定玩家（例如：t1）
+7. 帮助 - 显示此帮助信息"""
     return help_text
 
 

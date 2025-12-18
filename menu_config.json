@@ -1,0 +1,44 @@
+{
+  "button": [
+    {
+      "type": "click",
+      "name": "谁是卧底",
+      "key": "WHO_IS_UNDERCOVER"
+    },
+    {
+      "name": "游戏",
+      "sub_button": [
+        {
+          "type": "click",
+          "name": "创建房间",
+          "key": "CREATE_ROOM"
+        },
+        {
+          "type": "click",
+          "name": "加入房间",
+          "key": "JOIN_ROOM"
+        },
+        {
+          "type": "click",
+          "name": "查看状态",
+          "key": "SHOW_STATUS"
+        }
+      ]
+    },
+    {
+      "name": "帮助",
+      "sub_button": [
+        {
+          "type": "view",
+          "name": "游戏规则",
+          "url": "http://your-domain.com/menu"
+        },
+        {
+          "type": "click",
+          "name": "联系方式",
+          "key": "CONTACT"
+        }
+      ]
+    }
+  ]
+}
