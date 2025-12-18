@@ -46,7 +46,7 @@
 ### 使用 Docker Compose 部署
 
 1. 确保已安装 Docker 和 Docker Compose
-2. 复制 `.env.example` 文件为 `.env` 并修改其中的 `WECHAT_TOKEN` 为你的实际微信公众号 Token：
+2. 复制 `.env.example` 文件为 `.env` 并修改其中的环境变量：
    ```bash
    cp .env.example .env
    # 编辑 .env 文件，设置 WECHAT_TOKEN、WECHAT_APP_ID 和 WECHAT_APP_SECRET
