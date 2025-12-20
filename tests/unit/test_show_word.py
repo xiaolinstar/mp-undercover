@@ -63,8 +63,12 @@ class TestShowWord(unittest.TestCase):
                 self.rooms_data[room_id] = json.loads(value_str)
             return True
             
+        def mock_setex(key, ex, value):
+            return mock_set(key, value, ex)
+            
         self.mock_redis_client.get.side_effect = mock_get
         self.mock_redis_client.set.side_effect = mock_set
+        self.mock_redis_client.setex.side_effect = mock_setex
 
     def tearDown(self):
         """测试后清理"""

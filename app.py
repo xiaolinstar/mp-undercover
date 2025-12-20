@@ -1,12 +1,13 @@
-from flask import Flask, request
 import hashlib
-import os
-import xml.etree.ElementTree as ET
-import time
-import random
-import redis
 import json
+import os
+import random
+import time
+import xml.etree.ElementTree as ET
+
+import redis
 import requests
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -230,8 +231,7 @@ def wechat_response():
         to_user = root.find('ToUserName').text
         from_user = root.find('FromUserName').text
         msg_type = root.find('MsgType').text
-        create_time = root.find('CreateTime').text
-        
+
         # 初始化响应内容
         response_content = ""
         
@@ -326,6 +326,7 @@ def create_room(user_id):
         'eliminated': []
     }
     
+    # 保存房间信息
     save_room(room_id, room_data)
     
     # 保存用户信息
@@ -358,6 +359,8 @@ def join_room(user_id, room_id):
     
     # 加入房间
     room['players'].append(user_id)
+    
+    # 保存房间信息
     save_room(room_id, room)
     
     # 保存用户信息
@@ -391,14 +394,14 @@ def start_game(user_id):
         return "只有房主才能开始游戏"
     
     # 检查房间人数
-    player_count = len(room['players'])
-    if player_count < 3:
+    if len(room['players']) < 3:
         return "至少需要3人才能开始游戏"
     
     # 更改房间状态
     room['status'] = 'playing'
     
     # 根据玩家数量确定卧底数量
+    player_count = len(room['players'])
     if player_count <= 5:
         undercover_count = 1
     elif player_count <= 8:
@@ -419,6 +422,7 @@ def start_game(user_id):
         'undercover': word_pair[1]  # 卧底词
     }
     
+    # 保存房间信息
     save_room(room_id, room)
     
     # 通知所有玩家游戏开始和各自的词语
@@ -469,6 +473,8 @@ def handle_vote_by_index(user_id, target_index):
     
     # 记录被淘汰的玩家
     room['eliminated'].append(target_player)
+    
+    # 保存房间信息
     save_room(room_id, room)
     
     # 通知结果
@@ -484,7 +490,7 @@ def handle_vote_by_index(user_id, target_index):
 
 def check_game_end(room_id):
     """
-    检查游戏是否结束
+    检查游戏是否结束，如果结束则自动让玩家退出房间
     """
     room = get_room(room_id)
     
@@ -496,19 +502,50 @@ def check_game_end(room_id):
         room['status'] = 'ended'
         save_room(room_id, room)
         notify_players(room_id, "游戏结束！平民获胜，成功找出了所有卧底！")
+        
+        # 游戏结束后，让所有玩家自动退出房间
+        for player_id in room['players']:
+            user_data = get_user(player_id)
+            if user_data and user_data.get('current_room') == room_id:
+                user_data.pop('current_room', None)
+                save_user(player_id, user_data)
+        
         return
     
     # 检查剩余玩家数量
     remaining_players = [player for player in room['players'] if player not in room['eliminated']]
     
-    # 如果剩余玩家中卧底数量大于等于平民数量，则卧底获胜
-    remaining_undercovers = set(room['undercovers']) & set(remaining_players)
+    # 如果剩余玩家少于3人，游戏结束
+    if len(remaining_players) < 3:
+        room['status'] = 'ended'
+        save_room(room_id, room)
+        notify_players(room_id, "游戏结束！卧底获胜！")
+        
+        # 游戏结束后，让所有玩家自动退出房间
+        for player_id in room['players']:
+            user_data = get_user(player_id)
+            if user_data and user_data.get('current_room') == room_id:
+                user_data.pop('current_room', None)
+                save_user(player_id, user_data)
+        
+        return
+    
+    # 检查卧底数量是否大于等于平民数量
+    remaining_undercovers = set(remaining_players) & set(room['undercovers'])
     remaining_civilians = set(remaining_players) - set(remaining_undercovers)
     
     if len(remaining_undercovers) >= len(remaining_civilians):
         room['status'] = 'ended'
         save_room(room_id, room)
         notify_players(room_id, "游戏结束！卧底获胜！")
+        
+        # 游戏结束后，让所有玩家自动退出房间
+        for player_id in room['players']:
+            user_data = get_user(player_id)
+            if user_data and user_data.get('current_room') == room_id:
+                user_data.pop('current_room', None)
+                save_user(player_id, user_data)
+        
         return
     
     # 游戏继续，进入下一轮
@@ -666,10 +703,10 @@ def get_room(room_id):
 
 def save_room(room_id, room_data):
     """
-    将房间信息保存到Redis
+    将房间信息保存到Redis，设置2小时过期时间
     """
     try:
-        redis_client.set(f"room:{room_id}", json.dumps(room_data))
+        redis_client.setex(f"room:{room_id}", 2*60*60, json.dumps(room_data))  # 2小时过期
     except Exception as e:
         app.logger.error(f"Error saving room {room_id}: {e}")
 
@@ -696,6 +733,27 @@ def save_user(user_id, user_data):
         redis_client.set(f"user:{user_id}", json.dumps(user_data))
     except Exception as e:
         app.logger.error(f"Error saving user {user_id}: {e}")
+
+
+def get_all_users():
+    """
+    获取所有用户（用于生成用户昵称）
+    """
+    try:
+        user_keys = redis_client.keys('user:*')
+        users = []
+        for key in user_keys:
+            user_data = redis_client.get(key)
+            if user_data:
+                try:
+                    user = json.loads(user_data)
+                    users.append(user)
+                except json.JSONDecodeError:
+                    continue
+        return users
+    except Exception as e:
+        app.logger.error(f"获取所有用户时出错: {e}")
+        return []
 
 
 if __name__ == '__main__':
