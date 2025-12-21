@@ -191,11 +191,9 @@ class GameService:
             # 根据用户身份返回对应词语
             if user_id in room.undercovers:
                 word = room.words['undercover']
-                role = "卧底"
             else:
                 word = room.words['civilian']
-                role = "平民"
-            
+
             return True, f"您的词语：{word}"
         except Exception as e:
             print(f"显示词语异常: {e}")

@@ -40,7 +40,7 @@ class CreateRoomCommand(CommandStrategy):
         success, result = self.game_service.create_room(user_id)
         if success:
             room_id = result
-            return f"房间创建成功！房间号：{room_id}\n请其他玩家输入'加入房间{room_id}'加入房间\n房主输入'开始游戏'即可开始游戏"
+            return f"房间创建成功！房间号：{room_id}\n请其他玩家输入'加入房间{room_id}'\n房主输入'开始游戏'即可开始游戏"
         return result
 
 
