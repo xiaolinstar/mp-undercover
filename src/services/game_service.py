@@ -13,6 +13,7 @@ from src.repositories.room_repository import RoomRepository
 from src.repositories.user_repository import UserRepository
 from src.config.game_config import GameConfig
 from src.utils.word_generator import WordGenerator
+from src.fsm.game_state_machine import GameStateMachine, GameState, GameEvent
 
 
 class GameService:
@@ -22,6 +23,7 @@ class GameService:
         self.room_repo = room_repo
         self.user_repo = user_repo
         self.word_generator = WordGenerator(GameConfig.WORD_PAIRS)
+        self.fsm = GameStateMachine()
     
     def create_room(self, user_id: str) -> Tuple[bool, str]:
         """创建房间"""
@@ -123,6 +125,11 @@ class GameService:
                 return False, "游戏已经开始"
             elif room.status == RoomStatus.ENDED:
                 return False, "游戏已结束"
+
+            # 状态机校验
+            can_start = self.fsm.can_transition(GameState.WAITING, GameEvent.START)
+            if not can_start:
+                return False, "当前状态无法开始游戏"
             
             # 根据人数确定卧底数量
             player_count = room.get_player_count()
@@ -143,7 +150,8 @@ class GameService:
             }
             
             # 更新房间状态
-            room.status = RoomStatus.PLAYING
+            _, next_state = self.fsm.next_state(GameState.WAITING, GameEvent.START)
+            room.status = RoomStatus(next_state.value)
             room.current_round = 1
             
             # 保存房间信息
@@ -232,6 +240,10 @@ class GameService:
             if not self.room_repo.save(room):
                 return False, "投票失败"
             
+            # 状态机：投票事件保持在 PLAYING
+            if not self.fsm.can_transition(GameState.PLAYING, GameEvent.VOTE):
+                return False, "当前状态无法投票"
+
             # 检查游戏是否结束
             game_ended, result_message = self._check_game_end(room)
             if game_ended:
@@ -316,7 +328,8 @@ class GameService:
         
         # 如果所有卧底都被淘汰，平民获胜
         if len(eliminated_undercovers) == len(room.undercovers):
-            room.status = RoomStatus.ENDED
+            _, next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
+            room.status = RoomStatus(next_state.value)
             self.room_repo.save(room)
             
             # 让所有玩家自动退出房间
@@ -329,7 +342,8 @@ class GameService:
         
         # 如果剩余玩家少于3人，游戏结束
         if len(remaining_players) < 3:
-            room.status = RoomStatus.ENDED
+            _, next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
+            room.status = RoomStatus(next_state.value)
             self.room_repo.save(room)
             
             # 让所有玩家自动退出房间
@@ -342,7 +356,8 @@ class GameService:
         remaining_civilians = [p for p in remaining_players if p not in room.undercovers]
         
         if len(remaining_undercovers) >= len(remaining_civilians):
-            room.status = RoomStatus.ENDED
+            _, next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
+            room.status = RoomStatus(next_state.value)
             self.room_repo.save(room)
             
             # 让所有玩家自动退出房间

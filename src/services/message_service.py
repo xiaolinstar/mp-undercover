@@ -8,6 +8,7 @@
 import hashlib
 import xml.etree.ElementTree as ET
 from src.services.game_service import GameService
+from src.strategies.commands import CommandRouter
 # 修复导入路径，messages.py 在项目根目录下
 import sys
 import os
@@ -21,6 +22,7 @@ class MessageService:
     def __init__(self, game_service: GameService, token: str):
         self.game_service = game_service
         self.token = token
+        self.router = CommandRouter(game_service)
     
     def verify_wechat_signature(self, signature: str, timestamp: str, nonce: str) -> bool:
         """验证微信签名"""
@@ -70,50 +72,7 @@ class MessageService:
     def _handle_text_message(self, user_id: str, content: str) -> str:
         """处理文本消息"""
         content = content.strip().lower()
-        
-        # 处理用户命令
-        if content in ['谁是卧底', '帮助']:
-            return HELP_MESSAGES["INSTRUCTIONS"]
-        elif content == '创建房间':
-            success, result = self.game_service.create_room(user_id)
-            if success:
-                return f"房间创建成功！房间号：{result}\n请其他玩家输入'加入房间{result}'加入房间\n房主输入'开始游戏'即可开始游戏"
-            else:
-                return result
-        elif content.startswith('加入房间'):
-            room_id = content[4:].strip()  # 去掉"加入房间"前缀
-            if not room_id:
-                return "请输入房间号，格式：加入房间1234"
-            
-            success, result = self.game_service.join_room(user_id, room_id)
-            return result
-        elif content == '开始游戏':
-            success, result = self.game_service.start_game(user_id)
-            if success:
-                # 获取用户词语
-                word_success, word_result = self.game_service.show_word(user_id)
-                if word_success:
-                    return f"游戏开始！\n{word_result}\n请根据您的词语进行描述，注意不要暴露自己的身份\n线下进行描述和讨论，结束后由房主进行最终投票决定胜负"
-                else:
-                    return "游戏开始成功！\n请根据您的词语进行描述，注意不要暴露自己的身份\n线下进行描述和讨论，结束后由房主进行最终投票决定胜负"
-            else:
-                return result
-        elif content == '查看状态':
-            success, result = self.game_service.show_status(user_id)
-            return result
-        elif content == '查看词语':
-            success, result = self.game_service.show_word(user_id)
-            return result
-        elif content.startswith('t'):
-            # 房主投票，格式为 t+序号
-            try:
-                target_index = int(content[1:])
-                success, result = self.game_service.vote_player(user_id, target_index)
-                return result
-            except ValueError:
-                return ERROR_MESSAGES["VOTE_FORMAT_ERROR"]
-        else:
-            return ERROR_MESSAGES["UNKNOWN_COMMAND"]
+        return self.router.route(user_id, content)
 
     @staticmethod
     def _handle_event_message(user_id: str, event: str) -> str:
