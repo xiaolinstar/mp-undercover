@@ -16,19 +16,20 @@
 ### 新版架构特点
 
 1. **分层架构设计**：
+
    - 模型层（Models）：房间、用户等核心实体
    - 服务层（Services）：游戏逻辑、消息处理
    - 仓储层（Repositories）：数据访问抽象
    - 配置层（Config）：游戏规则和配置
    - 工具层（Utils）：辅助工具类
-
 2. **设计模式应用**：
+
    - 工厂模式：应用创建
    - 仓储模式：数据访问
    - 服务模式：业务逻辑封装
    - 配置模式：参数管理
-
 3. **现代化特性**：
+
    - 类型提示
    - 数据类（dataclass）
    - 枚举类型
@@ -202,6 +203,10 @@ SECRET_KEY=your_secret_key_here
 ### 测试运行
 
 ```bash
+# 启动 Redis 服务
+
+docker compose -f docker-compose-dev.yml up -d
+
 # 运行所有测试
 python -m pytest tests/
 
