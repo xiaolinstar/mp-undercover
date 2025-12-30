@@ -3,9 +3,9 @@ name: 谁是卧底桌游发牌器：自动化部署
 on:
   # 触发方式
   workflow_dispatch: # 手动触发
-#  push: # 推送到 main 分支时触发
-#    branches:
-#      - 'main'
+  push: # 推送到 main 分支时触发
+    branches:
+      - 'main'
 
 env:
   TZ: Asia/Shanghai # 设置时区为上海时区
@@ -24,7 +24,8 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd ~/WebstormProjects/undercover || { echo "Project directory not found"; exit 1; }
-            git pull # 拉取最新代码
+            
+            git pull || { echo "Git pull failed"; exit 1; } # 拉取最新代码
 
             # 停止并移除旧的容器
             docker compose down || true

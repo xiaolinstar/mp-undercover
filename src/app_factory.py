@@ -48,7 +48,7 @@ class AppFactory:
         app.config['WECHAT_TOKEN'] = os.environ.get('WECHAT_TOKEN', 'your_token_here')
         app.config['WECHAT_APP_ID'] = os.environ.get('WECHAT_APP_ID', 'your_app_id_here')
         app.config['WECHAT_APP_SECRET'] = os.environ.get('WECHAT_APP_SECRET', 'your_app_secret_here')
-        app.config['REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        app.config['REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
         app.config['ENABLE_WECHAT_PUSH'] = os.environ.get('ENABLE_WECHAT_PUSH', 'False')
         
         # 配置密钥
