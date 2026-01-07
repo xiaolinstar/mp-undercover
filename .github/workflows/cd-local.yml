@@ -23,7 +23,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd ~/WebstormProjects/undercover || { echo "Project directory not found"; exit 1; }
+            cd ~/PycharmProjects/undercover || { echo "Project directory not found"; exit 1; }
             
             git pull || { echo "Git pull failed"; exit 1; } # 拉取最新代码
 
