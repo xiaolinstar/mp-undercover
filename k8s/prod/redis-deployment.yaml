@@ -31,11 +31,9 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "128m"
-              ephemeral-storage: "5Gi"
             requests:
               memory: "256Mi"
               cpu: "128m"
-              ephemeral-storage: "512Mi"
       volumes:
         - name: redis-storage
           persistentVolumeClaim:
@@ -65,6 +63,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: local-path
   resources:
     requests:
       storage: 1Gi
