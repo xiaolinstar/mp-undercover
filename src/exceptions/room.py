@@ -37,6 +37,16 @@ class RoomStateError(RoomException):
     pass
 
 
+class InvalidStateTransitionError(RoomStateError):
+    """状态转换非法"""
+    def __init__(self, current_state: str, event: str):
+        super().__init__(
+            message=f"游戏当前处于 {current_state} 状态，无法执行 {event} 操作",
+            error_code="ROOM-STATE-005",
+            details={'current_state': current_state, 'event': event}
+        )
+
+
 class RoomPermissionError(RoomException):
     """房间权限错误"""
     def __init__(self, user_id: str, action: str):

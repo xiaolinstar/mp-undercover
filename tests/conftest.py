@@ -15,11 +15,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 @pytest.fixture(scope="session")
 def app():
     """创建应用实例"""
+    os.environ['APP_ENV'] = 'test'
     from src.app_factory import AppFactory
     app = AppFactory.create_app()
-    app.config['TESTING'] = True
-    # 使用测试用的Redis URL
-    app.config['REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
     return app
 
 

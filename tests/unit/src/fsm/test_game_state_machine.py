@@ -1,25 +1,21 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
+import pytest
 from src.fsm.game_state_machine import GameStateMachine, GameState, GameEvent
+from src.exceptions.room import InvalidStateTransitionError
 
 
 def test_state_transitions_basic():
     fsm = GameStateMachine()
 
     # WAITING -> START -> PLAYING
-    ok, next_state = fsm.next_state(GameState.WAITING, GameEvent.START)
-    assert ok is True
+    next_state = fsm.next_state(GameState.WAITING, GameEvent.START)
     assert next_state == GameState.PLAYING
 
     # PLAYING -> VOTE -> PLAYING
-    ok, next_state = fsm.next_state(GameState.PLAYING, GameEvent.VOTE)
-    assert ok is True
+    next_state = fsm.next_state(GameState.PLAYING, GameEvent.VOTE)
     assert next_state == GameState.PLAYING
 
     # PLAYING -> END -> ENDED
-    ok, next_state = fsm.next_state(GameState.PLAYING, GameEvent.END)
-    assert ok is True
+    next_state = fsm.next_state(GameState.PLAYING, GameEvent.END)
     assert next_state == GameState.ENDED
 
 
@@ -27,7 +23,6 @@ def test_illegal_transitions():
     fsm = GameStateMachine()
 
     # ENDED cannot START
-    ok, next_state = fsm.next_state(GameState.ENDED, GameEvent.START)
-    assert ok is False
-    assert next_state == GameState.ENDED
+    with pytest.raises(InvalidStateTransitionError):
+        fsm.next_state(GameState.ENDED, GameEvent.START)
 

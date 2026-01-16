@@ -1,7 +1,11 @@
-from src.app_factory import AppFactory
-
-app = AppFactory.create_app()
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+应用启动入口
+支持直接运行 python main.py
+同时也推荐使用 python -m src.main
+"""
+from src.main import main
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
+    main()

@@ -33,9 +33,12 @@ def setup_logger(name: str, log_level: Optional[str] = None) -> logging.Logger:
         log_level = os.environ.get('LOG_LEVEL', 'INFO')
     logger.setLevel(getattr(logging, log_level.upper()))
     
+    # 获取环境标识
+    env = os.environ.get('APP_ENV', 'dev').upper()
+    
     # 创建格式化器
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        f'[%(asctime)s] [{env}] [%(name)s] [%(levelname)s] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     

@@ -14,6 +14,8 @@ from src.services.game_service import GameService
 from src.services.message_service import MessageService
 from src.services.wechat_client import WeChatClient
 from src.services.push_service import PushService
+from src.config import config_by_name
+from src.utils.logger import setup_logger
 
 
 class AppFactory:
@@ -24,8 +26,13 @@ class AppFactory:
         """创建Flask应用"""
         app = Flask(__name__)
         
+        # 配置日志
+        env = os.environ.get('APP_ENV', 'dev')
+        app.logger = setup_logger(app.name)
+        app.logger.info(f"Application starting in {env} mode")
+        
         # 配置应用
-        AppFactory._configure_app(app)
+        AppFactory._configure_app(app, env)
         
         # 初始化服务
         room_repo, user_repo, game_service, message_service = AppFactory._init_services(app)
@@ -42,23 +49,49 @@ class AppFactory:
         return app
     
     @staticmethod
-    def _configure_app(app: Flask) -> None:
+    def _configure_app(app: Flask, env: str) -> None:
         """配置应用"""
-        # 从环境变量获取配置
-        app.config['WECHAT_TOKEN'] = os.environ.get('WECHAT_TOKEN', 'your_token_here')
-        app.config['WECHAT_APP_ID'] = os.environ.get('WECHAT_APP_ID', 'your_app_id_here')
-        app.config['WECHAT_APP_SECRET'] = os.environ.get('WECHAT_APP_SECRET', 'your_app_secret_here')
-        app.config['REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-        app.config['ENABLE_WECHAT_PUSH'] = os.environ.get('ENABLE_WECHAT_PUSH', 'False')
+        config_class = config_by_name.get(env, config_by_name['dev'])
+        app.config.from_object(config_class)
         
-        # 配置密钥
-        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+        # 生产环境校验
+        if env == 'prod':
+            AppFactory._validate_prod_config(app)
+
+    @staticmethod
+    def _validate_prod_config(app: Flask) -> None:
+        """校验生产环境配置是否安全（非默认值）"""
+        critical_configs = {
+            'WECHAT_TOKEN': ['', 'your_token_here'],
+            'WECHAT_APP_ID': ['', 'your_app_id_here'],
+            'WECHAT_APP_SECRET': ['', 'your_app_secret_here'],
+            'SECRET_KEY': ['default-secret-key', 'your-secret-key-here']
+        }
+        
+        missing_or_default = []
+        for key, defaults in critical_configs.items():
+            val = app.config.get(key)
+            if not val or val in defaults:
+                missing_or_default.append(key)
+        
+        if missing_or_default:
+            error_msg = f"Production environment security check failed! The following configs are missing or using defaults: {', '.join(missing_or_default)}"
+            app.logger.error(error_msg)
+            # 在生产环境下，配置不安全应该拒绝启动
+            raise ValueError(error_msg)
+        
+        app.logger.info("Production environment security check passed.")
     
     @staticmethod
     def _init_services(app: Flask) -> tuple:
         """初始化服务"""
-        # 创建Redis客户端 - 使用redis.Redis()而不是redis.from_url()
-        redis_client = redis.Redis.from_url(app.config['REDIS_URL'])
+        # 创建Redis客户端
+        if app.config.get('TESTING'):
+            import fakeredis
+            redis_client = fakeredis.FakeRedis(decode_responses=False)
+            app.logger.info("Using fakeredis for testing")
+        else:
+            redis_client = redis.Redis.from_url(app.config['REDIS_URL'])
         
         # 创建仓储
         room_repo = RoomRepository(redis_client)
@@ -68,7 +101,11 @@ class AppFactory:
         client = None
         push_service = None
         if app.config['ENABLE_WECHAT_PUSH'] in ('1', 'true', 'True'):
-            client = WeChatClient(app.config['WECHAT_APP_ID'], app.config['WECHAT_APP_SECRET'])
+            client = WeChatClient(
+                app.config['WECHAT_APP_ID'], 
+                app.config['WECHAT_APP_SECRET'],
+                redis_client=redis_client
+            )
             push_service = PushService(client)
         game_service = GameService(room_repo, user_repo, push_service)
         message_service = MessageService(game_service, app.config['WECHAT_TOKEN'])

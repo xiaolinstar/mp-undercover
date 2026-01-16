@@ -22,13 +22,13 @@ from src.exceptions.base import BaseGameException
 # 领域异常
 from src.exceptions.domain import DomainException
 
-# 房间异常
 from src.exceptions.room import (
     RoomException,
     RoomNotFoundError,
     RoomFullError,
     RoomStateError,
     RoomPermissionError,
+    InvalidStateTransitionError,
 )
 
 # 游戏异常
@@ -84,6 +84,7 @@ __all__ = [
     'RoomFullError',
     'RoomStateError',
     'RoomPermissionError',
+    'InvalidStateTransitionError',
     
     # 游戏异常
     'GameException',

@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from asyncio.log import logger
 from typing import List
 from src.services.game_service import GameService
 from src.config.commands_config import COMMAND_ALIASES
 import re
 
-# 修复导入路径，messages.py 在项目根目录
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from src.messages import HELP_MESSAGES, ERROR_MESSAGES
 
 
@@ -116,6 +113,7 @@ class CommandRouter:
         
         for strategy in self.strategies:
             if strategy.matches(normalized):
+                logger.info(f"用户 {user_id} 执行命令 {normalized}")
                 response = strategy.execute(user_id, normalized)
                 break
         

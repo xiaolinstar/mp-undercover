@@ -37,10 +37,10 @@
 
 ## 目录结构
 
-```
+```text
 .
 ├── src/                    # 源代码目录
-│   ├── main.py            # 应用入口
+│   ├── main.py            # 核心业务入口
 │   ├── app_factory.py     # 应用工厂
 │   ├── models/           # 模型层
 │   │   ├── room.py       # 房间模型
@@ -72,52 +72,67 @@
 └── .gitignore             # Git忽略文件
 ```
 
+## 环境区分策略
+
+项目根据不同的使用场景，采用了差异化的环境区分策略：
+
+| 环境 | `APP_ENV` | 依赖策略 | 部署方式 |
+| :--- | :--- | :--- | :--- |
+| **开发环境 (Dev)** | `dev`(默认) | 使用 `docker-compose-dev.yml` 启动 Redis，应用本地运行 | 本地启动 / Docker Compose |
+| **测试环境 (Test)** | `test` | **无外部依赖**。使用 `fakeredis` 实现内存数据库，降低环境复杂度 | `pytest` 自动处理 |
+| **生产环境 (Prod)** | `prod` | 使用云端/集群内 Redis，启用生产级日志和安全策略 | Kubernetes (k8s) |
+
+> ⚠️ **注意**：在 `prod` 环境下，系统会强制检查 `WECHAT_TOKEN`、`SECRET_KEY` 等关键配置。若使用默认值或为空，应用将拒绝启动以确保安全。
+
+---
+
 ## 部署方式
 
-### Docker Compose部署（推荐）
+### 1. 开发环境运行（本地）
+
+本项目支持两种启动方式，推荐使用 **模块模式**：
 
 ```bash
-# 1. 复制环境变量配置
-cp .env.example .env
-# 编辑.env文件，填写实际的微信配置信息
+# 启动依赖（Redis）
+docker compose -f docker-compose-dev.yml up -d
 
-# 2. 启动服务
-docker-compose up -d
+# 安装依赖
+pip install -r requirements.txt
 
-# 3. 查看服务状态
-docker-compose ps
+# 方式 A：最佳实践（模块模式运行）
+python -m src.main
 
-# 4. 查看日志
-docker-compose logs -f
+# 方式 B：快捷方式（脚本模式运行）
+python main.py
 ```
+
+### 2. Docker Compose 全栈部署
+
+```bash
+docker-compose up -d
+```
+
+### 3. 生产环境部署 (Kubernetes)
+
+```bash
+kubectl apply -f k8s/prod/
+```
+
+---
 
 ## 测试运行
 
-
-### 本地环境测试
+由于测试环境使用了 `fakeredis`（内存数据库），您**不需要**启动任何外部服务即可运行测试。
 
 ```bash
-# 确保已安装依赖
+# 安装测试依赖
 pip install -r requirements.txt
 
-# 启动Redis容器服务
-docker compose -f docker-compose-dev.yml up -d
-
-# 或者直接运行
+# 运行所有测试
 python -m pytest tests/
 
-# 运行单元测试
-python -m pytest tests/unit/
-
-# 运行集成测试
-python -m pytest tests/integration/
-
 # 生成覆盖率报告
-python -m pytest tests/ --cov=src --cov-report=html
-
-
-# 卸载Redis容器服务
-docker compose -f docker-compose-dev.yml down
+python -m pytest tests/ --cov=src --cov-report=term-missing
 ```
 
 ## 环境变量配置
@@ -138,6 +153,7 @@ SECRET_KEY=your_secret_key_here
 ## 游戏使用说明
 
 ### 基本命令
+
 1. **创建房间**：发送"创建"
 2. **加入房间**：发送"加入+房间号"（如"加入1234"）
 3. **开始游戏**：房主发送"开始"
@@ -158,35 +174,6 @@ SECRET_KEY=your_secret_key_here
 - 游戏目标：
   - 平民：找出所有卧底
   - 卧底：混淆视听，生存到最后
-
-## 开发指南
-
-### 代码规范
-
-- 遵循PEP 8代码风格
-- 使用类型提示
-- 编写单元测试
-- 保持函数简洁单一职责
-
-### 测试运行
-
-```bash
-# 启动 Redis 服务
-
-docker compose -f docker-compose-dev.yml up -d
-
-# 运行所有测试
-python -m pytest tests/
-
-# 运行单元测试
-python -m pytest tests/unit/
-
-# 运行集成测试
-python -m pytest tests/integration/
-
-# 生成覆盖率报告
-python -m pytest tests/ --cov=src --cov-report=html
-```
 
 ## 项目文档
 

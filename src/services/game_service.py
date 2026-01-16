@@ -19,7 +19,7 @@ from src.exceptions import (
     RoomNotFoundError, RoomStateError, RoomFullError, RoomPermissionError,
     GameNotStartedError, GameAlreadyStartedError, GameEndedError,
     InsufficientPlayersError, PlayerEliminatedError, InvalidPlayerIndexError,
-    UserNotInRoomError, UserAlreadyInRoomError,
+    UserNotInRoomError, UserAlreadyInRoomError, InvalidStateTransitionError,
     RepositoryException, DomainException
 )
 from src.utils.logger import setup_logger, log_exception, log_business_event
@@ -66,7 +66,9 @@ class GameService:
                 if nickname:
                     user.nickname = nickname
                     self.user_repo.save(user)
-            
+            else:
+                logger.warning("推送服务未启用，无法获取用户昵称")
+
             log_business_event(logger, "房间创建成功", user_id=user_id, room_id=room_id)
             return True, room_id
             
@@ -192,7 +194,7 @@ class GameService:
             }
             
             # 更新房间状态
-            _, next_state = self.fsm.next_state(GameState.WAITING, GameEvent.START)
+            next_state = self.fsm.next_state(GameState.WAITING, GameEvent.START)
             room.status = RoomStatus(next_state.value)
             room.current_round = 1
             
@@ -426,7 +428,7 @@ class GameService:
         
         # 如果所有卧底都被淘汰，平民获胜
         if len(eliminated_undercovers) == len(room.undercovers):
-            _, next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
+            next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
             room.status = RoomStatus(next_state.value)
             self.room_repo.save(room)
             
@@ -440,7 +442,7 @@ class GameService:
         
         # 如果剩余玩家少于3人，游戏结束
         if len(remaining_players) < 3:
-            _, next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
+            next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
             room.status = RoomStatus(next_state.value)
             self.room_repo.save(room)
             
@@ -454,7 +456,7 @@ class GameService:
         remaining_civilians = [p for p in remaining_players if p not in room.undercovers]
         
         if len(remaining_undercovers) >= len(remaining_civilians):
-            _, next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
+            next_state = self.fsm.next_state(GameState.PLAYING, GameEvent.END)
             room.status = RoomStatus(next_state.value)
             self.room_repo.save(room)
             

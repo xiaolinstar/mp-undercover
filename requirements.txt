@@ -19,3 +19,6 @@ redis==7.1.0
 requests==2.32.5
 urllib3==2.6.2
 Werkzeug==3.1.4
+fakeredis==2.26.1
+wechatpy==1.8.18
+cryptography==44.0.0

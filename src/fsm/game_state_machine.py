@@ -5,6 +5,9 @@ from enum import Enum
 from typing import Dict, Tuple
 
 
+from src.exceptions.room import InvalidStateTransitionError
+
+
 class GameState(Enum):
     WAITING = "waiting"
     PLAYING = "playing"
@@ -37,8 +40,8 @@ class GameStateMachine:
     def can_transition(self, state: GameState, event: GameEvent) -> bool:
         return event in self.transitions.get(state, {})
 
-    def next_state(self, state: GameState, event: GameEvent) -> Tuple[bool, GameState]:
+    def next_state(self, state: GameState, event: GameEvent) -> GameState:
         if not self.can_transition(state, event):
-            return False, state
-        return True, self.transitions[state][event]
+            raise InvalidStateTransitionError(state.value, event.value)
+        return self.transitions[state][event]
 

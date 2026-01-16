@@ -29,8 +29,8 @@ class MockPush:
 
 
 def test_join_room_fill_nickname(monkeypatch):
-    import redis
-    r = redis.Redis.from_url('redis://localhost:6379/1')
+    import fakeredis
+    r = fakeredis.FakeRedis(decode_responses=False)
     room_repo = RoomRepository(r)
     user_repo = UserRepository(r)
     push = MockPush()
@@ -43,8 +43,8 @@ def test_join_room_fill_nickname(monkeypatch):
 
 
 def test_start_game_push_words(monkeypatch):
-    import redis
-    r = redis.Redis.from_url('redis://localhost:6379/1')
+    import fakeredis
+    r = fakeredis.FakeRedis(decode_responses=False)
     room_repo = RoomRepository(r)
     user_repo = UserRepository(r)
     push = MockPush()
@@ -58,8 +58,8 @@ def test_start_game_push_words(monkeypatch):
 
 
 def test_vote_push_status(monkeypatch):
-    import redis
-    r = redis.Redis.from_url('redis://localhost:6379/1')
+    import fakeredis
+    r = fakeredis.FakeRedis(decode_responses=False)
     room_repo = RoomRepository(r)
     user_repo = UserRepository(r)
     push = MockPush()
