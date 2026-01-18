@@ -10,7 +10,7 @@ secretGenerator:
 
 # 引用其他的资源文件
 resources:
-  - app-deployment.yaml
-  - nginx-deployment.yaml
-  - redis-deployment.yaml
+  - app-deploy.yaml
+  - nginx-deploy.yaml
+  - redis-deploy.yaml
   - ingress.yaml

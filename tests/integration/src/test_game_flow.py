@@ -6,13 +6,10 @@
 
 import pytest
 import random
-from unittest.mock import Mock, patch
-from src.app_factory import AppFactory
+from unittest.mock import Mock
 from src.repositories.room_repository import RoomRepository
 from src.repositories.user_repository import UserRepository
 from src.services.game_service import GameService
-from src.models.room import Room, RoomStatus
-from src.models.user import User
 
 
 class TestGameFlow:

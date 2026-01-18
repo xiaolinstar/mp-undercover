@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum
-from typing import Dict, Tuple
+from typing import Dict
 
 
 from src.exceptions.room import InvalidStateTransitionError

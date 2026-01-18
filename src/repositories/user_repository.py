@@ -51,7 +51,7 @@ class UserRepository:
             key = self._get_key(user.openid)
             self.redis.set(key, user_json)
             
-            logger.debug(f"用户保存成功", extra={'user_id': user.openid})
+            logger.debug("用户保存成功", extra={'user_id': user.openid})
             
         except redis.ConnectionError as e:
             error = RedisConnectionError("保存用户", cause=e)
@@ -98,7 +98,7 @@ class UserRepository:
             user_json = self.redis.get(key)
             
             if user_json is None:
-                logger.debug(f"用户不存在", extra={'user_id': user_id})
+                logger.debug("用户不存在", extra={'user_id': user_id})
                 return None
             
             # 处理bytes类型的JSON数据
@@ -108,7 +108,7 @@ class UserRepository:
             user_data = json.loads(user_json)
             user = User.from_dict(user_data)
             
-            logger.debug(f"用户获取成功", extra={'user_id': user_id})
+            logger.debug("用户获取成功", extra={'user_id': user_id})
             return user
             
         except redis.ConnectionError as e:
@@ -150,7 +150,7 @@ class UserRepository:
         try:
             key = self._get_key(user_id)
             self.redis.delete(key)
-            logger.debug(f"用户删除成功", extra={'user_id': user_id})
+            logger.debug("用户删除成功", extra={'user_id': user_id})
             
         except redis.ConnectionError as e:
             error = RedisConnectionError("删除用户", cause=e)

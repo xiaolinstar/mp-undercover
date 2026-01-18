@@ -1,0 +1,102 @@
+name: 谁是卧底 CD (部署)
+
+on:
+  # 当 CI 工作流运行成功时自动触发部署
+  workflow_run:
+    workflows: ["谁是卧底 CI (构建)"]
+    types:
+      - completed
+    branches:
+      - main
+  # 支持在 Github Actions 界面点击按钮一键部署
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ==========================================
+  # Job 1: 预部署验证 (Validation)
+  # ==========================================
+  validate:
+    name: Manifest Validation
+    runs-on: ubuntu-latest
+    # 只有 CI 成功或者是手动触发才运行验证
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Dry Run Kustomize Build
+        run: |
+          cd k8s/prod
+          # 创建一个占位 .env 仅用于验证渲染逻辑
+          touch .env
+          kustomize build . > /dev/null
+          echo "Kustomize manifest syntax is valid."
+
+  # ==========================================
+  # Job 2: 执行远程部署 (Deploy)
+  # ==========================================
+  deploy:
+    name: Deploy to K3s
+    needs: validate # 只有验证通过才执行部署
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true # 脚本中任何命令失败都立即停止 Job
+          script: |
+            set -e # 确保远程 Shell 遇错即停
+            
+            # 1. 检出/更新配置
+            echo ">>> Updating configuration files..."
+            cd ~/PycharmProjects/undercover || { echo "Project directory not found"; exit 1; }
+            git pull
+            
+            # 2. 定位环境目录
+            cd k8s/prod
+            
+            # 3. 注入生产密钥 (GitOps 模式)
+            echo ">>> Injecting secrets from GitHub..."
+            cat <<EOF > .env
+            WECHAT_TOKEN=${{ secrets.WECHAT_TOKEN }}
+            WECHAT_APP_ID=${{ secrets.WECHAT_APP_ID }}
+            WECHAT_APP_SECRET=${{ secrets.WECHAT_APP_SECRET }}
+            EOF
+            
+            # 4. 确定镜像 SHA 标签
+            # 优先使用触发此 CD 的 CI 流水线的 SHA
+            SHA=${{ github.event.workflow_run.head_sha || github.sha }}
+            
+            # 5. 更新并应用配置
+            echo ">>> Updating image to $SHA and applying to cluster..."
+            kustomize edit set image undercover=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:$SHA
+            kubectl apply -k .
+            
+            # 6. 验证滚动更新状态
+            echo ">>> Waiting for pod rollout..."
+            kubectl rollout status deployment/web-app --timeout=120s
+            
+            # 7. 清理敏感临时文件
+            rm .env
+            
+            echo ">>> Deployment Successful!"
+            echo "Deployed Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:$SHA"

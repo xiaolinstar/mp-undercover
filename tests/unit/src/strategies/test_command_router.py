@@ -10,7 +10,7 @@ class StubGameService:
         return True, "1234"
 
     def join_room(self, user_id, room_id):
-        return True, f"成功加入房间，当前房间人数：2"
+        return True, "成功加入房间，当前房间人数：2"
 
     def start_game(self, user_id):
         return True, "游戏开始成功"

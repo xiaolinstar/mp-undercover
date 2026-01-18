@@ -11,7 +11,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')))
 
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from src.services.game_service import GameService
 from src.models.room import Room, RoomStatus
 from src.models.user import User

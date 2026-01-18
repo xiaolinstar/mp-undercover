@@ -19,8 +19,7 @@ from src.exceptions import (
     RoomNotFoundError, RoomStateError, RoomFullError, RoomPermissionError,
     GameNotStartedError, GameAlreadyStartedError, GameEndedError,
     InsufficientPlayersError, PlayerEliminatedError, InvalidPlayerIndexError,
-    UserNotInRoomError, UserAlreadyInRoomError, InvalidStateTransitionError,
-    RepositoryException, DomainException
+    UserNotInRoomError, UserAlreadyInRoomError, RepositoryException, DomainException
 )
 from src.utils.logger import setup_logger, log_exception, log_business_event
 

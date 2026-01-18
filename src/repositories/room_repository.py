@@ -59,7 +59,7 @@ class RoomRepository:
                 room_json
             )
             
-            logger.debug(f"房间保存成功", extra={'room_id': room.room_id})
+            logger.debug("房间保存成功", extra={'room_id': room.room_id})
             
         except redis.ConnectionError as e:
             error = RedisConnectionError("保存房间", cause=e)
@@ -106,7 +106,7 @@ class RoomRepository:
             room_json = self.redis.get(key)
             
             if room_json is None:
-                logger.debug(f"房间不存在", extra={'room_id': room_id})
+                logger.debug("房间不存在", extra={'room_id': room_id})
                 return None
             
             # 处理bytes类型的JSON数据
@@ -116,7 +116,7 @@ class RoomRepository:
             room_data = json.loads(room_json)
             room = Room.from_dict(room_data)
             
-            logger.debug(f"房间获取成功", extra={'room_id': room_id})
+            logger.debug("房间获取成功", extra={'room_id': room_id})
             return room
             
         except redis.ConnectionError as e:
@@ -158,7 +158,7 @@ class RoomRepository:
         try:
             key = self._get_key(room_id)
             self.redis.delete(key)
-            logger.debug(f"房间删除成功", extra={'room_id': room_id})
+            logger.debug("房间删除成功", extra={'room_id': room_id})
             
         except redis.ConnectionError as e:
             error = RedisConnectionError("删除房间", cause=e)
@@ -192,7 +192,7 @@ class RoomRepository:
         try:
             key = self._get_key(room_id)
             exists = self.redis.exists(key) > 0
-            logger.debug(f"房间存在性检查", extra={'room_id': room_id, 'exists': exists})
+            logger.debug("房间存在性检查", extra={'room_id': room_id, 'exists': exists})
             return exists
             
         except redis.ConnectionError as e:
