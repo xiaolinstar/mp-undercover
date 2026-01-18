@@ -37,6 +37,7 @@ class MessageService:
         try:
             # 解析消息
             msg = parse_message(xml_data)
+            logger.info(f"解析微信消息: 类型={msg.type}, 用户={msg.from_user_id}")
             
             # 根据消息类型处理
             if msg.type == 'text':

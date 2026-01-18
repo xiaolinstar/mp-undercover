@@ -16,12 +16,9 @@ services:
     container_name: flask-app
     expose:
       - "5000"
+    env_file:
+      - .env
     environment:
-      - WECHAT_TOKEN=${WECHAT_TOKEN}
-      - WECHAT_APP_ID=${WECHAT_APP_ID}
-      - WECHAT_APP_SECRET=${WECHAT_APP_SECRET}
-      - REDIS_URL=redis://redis:6379/0
-      - APP_ENV=dev
       - TZ=Asia/Shanghai
     restart: always
     depends_on:

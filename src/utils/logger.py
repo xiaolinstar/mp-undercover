@@ -16,22 +16,20 @@ def setup_logger(name: str, log_level: Optional[str] = None) -> logging.Logger:
     配置日志器
     
     Args:
-        name: 日志器名称，通常使用 __name__
+        name: 日志器名称，建议使用项目根包名（如 'src'）以支持子模块日志冒泡
         log_level: 日志级别，默认从环境变量读取或使用 INFO
-        
-    Returns:
-        配置好的日志器
     """
     logger = logging.getLogger(name)
-    
-    # 避免重复添加处理器
-    if logger.handlers:
-        return logger
     
     # 设置日志级别
     if log_level is None:
         log_level = os.environ.get('LOG_LEVEL', 'INFO')
-    logger.setLevel(getattr(logging, log_level.upper()))
+    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+    logger.setLevel(numeric_level)
+    
+    # 避免重复添加处理器
+    if logger.handlers:
+        return logger
     
     # 获取环境标识
     env = os.environ.get('APP_ENV', 'dev').upper()
@@ -44,29 +42,25 @@ def setup_logger(name: str, log_level: Optional[str] = None) -> logging.Logger:
     
     # 控制台处理器
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(numeric_level)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
     
     # 文件处理器（仅在非容器环境或指定日志目录时启用）
     log_dir = os.environ.get('LOG_DIR', 'logs')
-    if os.path.exists(log_dir) or os.environ.get('ENABLE_FILE_LOGGING', 'false').lower() == 'true':
+    if os.environ.get('ENABLE_FILE_LOGGING', 'false').lower() == 'true':
         try:
-            # 确保日志目录存在
             os.makedirs(log_dir, exist_ok=True)
-            
-            # 文件处理器（轮转）
             file_handler = RotatingFileHandler(
                 os.path.join(log_dir, 'app.log'),
-                maxBytes=10*1024*1024,  # 10MB
+                maxBytes=10*1024*1024,
                 backupCount=5,
                 encoding='utf-8'
             )
-            file_handler.setLevel(logging.DEBUG)
+            file_handler.setLevel(numeric_level)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
-        except (OSError, PermissionError) as e:
-            # 如果无法创建文件日志，只记录到控制台
+        except Exception as e:
             logger.warning(f"无法创建文件日志处理器: {e}")
     
     return logger
