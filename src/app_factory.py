@@ -139,5 +139,5 @@ class AppFactory:
         
         @app.route('/health')
         def health_check():
-            """健康检查接口"""
+            """健康检查接口，可用于kube-probe"""
             return {'status': 'healthy', 'timestamp': int(time.time())}

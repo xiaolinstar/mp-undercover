@@ -14,6 +14,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  # Explicitly declare this to avoid "Context access might be invalid" validation errors
+  IMAGE_NAME_LOWER: ""
 
 jobs:
   # ==========================================
