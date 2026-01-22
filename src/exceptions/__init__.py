@@ -1,38 +1,57 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-异常类模块
-定义项目中使用的所有自定义异常
-
-异常类层次结构：
-- BaseGameException (基础异常)
-  - DomainException (领域异常)
-    - RoomException (房间异常)
-    - GameException (游戏异常)
-    - UserException (用户异常)
-  - InfrastructureException (基础设施异常)
-    - RepositoryException (仓储异常)
-    - ExternalServiceException (外部服务异常)
-  - ValidationException (验证异常)
+异常导出模块
+将分散在各个分层文件中的异常统一聚合导出，方便外部引用
 """
 
-# 基础异常
-from src.exceptions.base import BaseGameException
+# ============================================================================
+# 1. 基础分类导出
+# ============================================================================
+from src.exceptions.base import (
+    BaseAppException,
+    ServerException,
+    ClientException,
+    BusinessException
+)
 
-# 领域异常
-from src.exceptions.domain import DomainException
+# ============================================================================
+# 2. 服务端异常 (Server Exceptions)
+# ============================================================================
+from src.exceptions.server import (
+    RepositoryException,
+    DataAccessError,
+    SerializationError,
+    CacheError,
+    ExternalServiceException,
+    WeChatAPIError,
+    RedisConnectionError
+)
 
-from src.exceptions.room import (
-    RoomException,
+# ============================================================================
+# 3. 客户端异常 (Client Exceptions)
+# ============================================================================
+from src.exceptions.client import (
+    ValidationException,
+    InvalidInputError,
+    InvalidCommandError,
+    ResourceNotFoundError,
     RoomNotFoundError,
+    UserNotFoundError
+)
+
+# ============================================================================
+# 4. 业务逻辑异常 (Business Exceptions)
+# ============================================================================
+from src.exceptions.business.room import (
+    RoomException,
     RoomFullError,
     RoomStateError,
     RoomPermissionError,
-    InvalidStateTransitionError,
+    InvalidStateTransitionError
 )
 
-# 游戏异常
-from src.exceptions.game import (
+from src.exceptions.business.game import (
     GameException,
     GameNotStartedError,
     GameAlreadyStartedError,
@@ -40,81 +59,42 @@ from src.exceptions.game import (
     InsufficientPlayersError,
     InvalidPlayerStateError,
     PlayerEliminatedError,
-    InvalidPlayerIndexError,
+    InvalidPlayerIndexError
 )
 
-# 用户异常
-from src.exceptions.user import (
+from src.exceptions.business.user import (
     UserException,
-    UserNotFoundError,
     UserNotInRoomError,
-    UserAlreadyInRoomError,
+    UserAlreadyInRoomError
 )
 
-# 基础设施异常
-from src.exceptions.infrastructure import (
-    InfrastructureException,
-    RepositoryException,
-    DataAccessError,
-    SerializationError,
-    CacheError,
-    ExternalServiceException,
-    WeChatAPIError,
-    RedisConnectionError,
-)
-
-# 验证异常
-from src.exceptions.validation import (
-    ValidationException,
-    InvalidInputError,
-    InvalidRoomIdError,
-    InvalidCommandError,
-)
+# 为了向后兼容，导出一些别名 (Alias for backward compatibility)
+BaseGameException = BaseAppException
+DomainException = BusinessException
+InfrastructureException = ServerException
 
 __all__ = [
-    # 基础异常
-    'BaseGameException',
-    
-    # 领域异常
-    'DomainException',
-    
-    # 房间异常
-    'RoomException',
-    'RoomNotFoundError',
-    'RoomFullError',
-    'RoomStateError',
-    'RoomPermissionError',
-    'InvalidStateTransitionError',
-    
-    # 游戏异常
-    'GameException',
-    'GameNotStartedError',
-    'GameAlreadyStartedError',
-    'GameEndedError',
-    'InsufficientPlayersError',
-    'InvalidPlayerStateError',
-    'PlayerEliminatedError',
-    'InvalidPlayerIndexError',
-    
-    # 用户异常
-    'UserException',
-    'UserNotFoundError',
-    'UserNotInRoomError',
-    'UserAlreadyInRoomError',
-    
-    # 基础设施异常
-    'InfrastructureException',
-    'RepositoryException',
-    'DataAccessError',
-    'SerializationError',
-    'CacheError',
-    'ExternalServiceException',
-    'WeChatAPIError',
-    'RedisConnectionError',
-    
-    # 验证异常
-    'ValidationException',
-    'InvalidInputError',
-    'InvalidRoomIdError',
-    'InvalidCommandError',
+    # 基础分类
+    'BaseAppException', 'BaseGameException',
+    'ServerException', 'InfrastructureException',
+    'ClientException',
+    'BusinessException', 'DomainException',
+
+    # 服务端
+    'RepositoryException', 'DataAccessError', 'SerializationError', 'CacheError',
+    'ExternalServiceException', 'WeChatAPIError', 'RedisConnectionError',
+
+    # 客户端
+    'ValidationException', 'InvalidInputError', 'InvalidCommandError',
+    'ResourceNotFoundError', 'RoomNotFoundError', 'UserNotFoundError',
+
+    # 业务: 房间
+    'RoomException', 'RoomFullError', 'RoomStateError', 'RoomPermissionError', 'InvalidStateTransitionError',
+
+    # 业务: 游戏
+    'GameException', 'GameNotStartedError', 'GameAlreadyStartedError', 'GameEndedError',
+    'InsufficientPlayersError', 'InvalidPlayerStateError', 'PlayerEliminatedError', 'InvalidPlayerIndexError',
+
+    # 业务: 用户
+    'UserException', 'UserNotInRoomError', 'UserAlreadyInRoomError'
 ]

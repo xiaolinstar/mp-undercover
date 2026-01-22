@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Dict
 
 
-from src.exceptions.room import InvalidStateTransitionError
+from src.exceptions import InvalidStateTransitionError
 
 
 class GameState(Enum):

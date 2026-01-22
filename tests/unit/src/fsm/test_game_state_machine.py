@@ -1,6 +1,6 @@
 import pytest
 from src.fsm.game_state_machine import GameStateMachine, GameState, GameEvent
-from src.exceptions.room import InvalidStateTransitionError
+from src.exceptions import InvalidStateTransitionError
 
 
 def test_state_transitions_basic():

@@ -19,7 +19,8 @@ from src.exceptions import (
     RoomNotFoundError, RoomStateError, RoomFullError, RoomPermissionError,
     GameNotStartedError, GameAlreadyStartedError, GameEndedError,
     InsufficientPlayersError, PlayerEliminatedError, InvalidPlayerIndexError,
-    UserNotInRoomError, UserAlreadyInRoomError, RepositoryException, DomainException
+    UserNotInRoomError, UserAlreadyInRoomError, RepositoryException, 
+    DomainException, ClientException
 )
 from src.utils.logger import setup_logger, log_exception, log_business_event
 
@@ -126,8 +127,8 @@ class GameService:
             log_business_event(logger, "用户加入房间", user_id=user_id, room_id=room_id, player_count=room.get_player_count())
             return True, f"成功加入房间，当前房间人数：{room.get_player_count()}"
             
-        except DomainException as e:
-            logger.warning(f"业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
+        except (DomainException, ClientException) as e:
+            logger.warning(f"用户/业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
             return False, e.message
             
         except RepositoryException as e:
@@ -213,8 +214,8 @@ class GameService:
                              player_count=player_count, undercover_count=undercover_count)
             return True, "游戏开始成功"
             
-        except DomainException as e:
-            logger.warning(f"业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
+        except (DomainException, ClientException) as e:
+            logger.warning(f"用户/业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
             return False, e.message
             
         except RepositoryException as e:
@@ -258,8 +259,8 @@ class GameService:
 
             return True, f"您的词语：{word}"
             
-        except DomainException as e:
-            logger.warning(f"业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
+        except (DomainException, ClientException) as e:
+            logger.warning(f"用户/业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
             return False, e.message
             
         except RepositoryException as e:
@@ -332,8 +333,8 @@ class GameService:
                 self._push_room_status(room)
             return True, "投票成功"
             
-        except DomainException as e:
-            logger.warning(f"业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
+        except (DomainException, ClientException) as e:
+            logger.warning(f"用户/业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
             return False, e.message
             
         except RepositoryException as e:
@@ -401,8 +402,8 @@ class GameService:
             
             return True, "\n".join(status_lines)
             
-        except DomainException as e:
-            logger.warning(f"业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
+        except (DomainException, ClientException) as e:
+            logger.warning(f"用户/业务异常: {e.error_code} - {e.message}", extra={'details': e.details})
             return False, e.message
             
         except RepositoryException as e:
