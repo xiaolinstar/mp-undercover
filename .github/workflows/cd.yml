@@ -1,0 +1,45 @@
+name: 谁是卧底桌游发牌器：自动化部署
+
+on:
+  # 触发方式
+  workflow_dispatch: # 手动触发
+  repository_dispatch:
+    types: [deploy_trigger] # 支持通过 Webhook 触发
+  workflow_run:
+    workflows: ["谁是卧底 CI (构建)"]
+    types: [completed]
+    branches: [main]
+
+env:
+  TZ: Asia/Shanghai # 设置时区为上海时区
+
+jobs:
+  deploy:
+    # 只有 CI 成功、手动触发或 Webhook 触发才运行
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest # 使用Ubuntu最新版本作为运行环境
+    environment: production # 使用production环境
+    
+    steps:
+      - name: Deploy to target server via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd ~/PycharmProjects/undercover || { echo "Project directory not found"; exit 1; }
+            
+            git pull || { echo "Git pull failed"; exit 1; } # 拉取最新代码
+
+            # 停止并移除旧的容器
+            docker compose down || true
+            
+            # 启动新的容器
+            docker compose up -d --build
+            
+            # 清理未使用的镜像
+            docker image prune -f
+            
+            echo "Deployment completed successfully!"
+

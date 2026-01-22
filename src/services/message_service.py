@@ -37,6 +37,12 @@ class MessageService:
         try:
             # 解析消息
             msg = parse_message(xml_data)
+            
+            # 检查消息是否成功解析
+            if msg is None:
+                logger.warning("未能解析微信消息，XML数据为空或格式不正确")
+                return "抱歉，无法解析您的消息"
+            
             logger.info(f"解析微信消息: 类型={msg.type}, 用户={msg.source}")
             
             # 根据消息类型处理
