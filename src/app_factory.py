@@ -5,7 +5,6 @@
 负责创建和配置Flask应用
 """
 
-import os
 import redis
 from flask import Flask
 from src.repositories.room_repository import RoomRepository
