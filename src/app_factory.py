@@ -14,8 +14,8 @@ from src.services.game_service import GameService
 from src.services.message_service import MessageService
 from src.services.wechat_client import WeChatClient
 from src.services.push_service import PushService
-from src.config import config_by_name
 from src.utils.logger import setup_logger
+from src.config.settings import settings
 
 
 class AppFactory:
@@ -27,12 +27,15 @@ class AppFactory:
         app = Flask(__name__)
         
         # 配置日志
-        env = os.environ.get('APP_ENV', 'dev')
         app.logger = setup_logger(app.name)
-        app.logger.info(f"Application starting in {env} mode")
+        app.logger.info(f"Application starting in {settings.APP_ENV} mode")
         
         # 配置应用
-        AppFactory._configure_app(app, env)
+        app.config.from_object(settings)
+        
+        # 生产环境校验
+        if settings.APP_ENV == 'prod':
+            AppFactory._validate_prod_config(app)
         
         # 初始化服务
         room_repo, user_repo, game_service, message_service = AppFactory._init_services(app)
@@ -48,16 +51,6 @@ class AppFactory:
         
         return app
     
-    @staticmethod
-    def _configure_app(app: Flask, env: str) -> None:
-        """配置应用"""
-        config_class = config_by_name.get(env, config_by_name['dev'])
-        app.config.from_object(config_class)
-        
-        # 生产环境校验
-        if env == 'prod':
-            AppFactory._validate_prod_config(app)
-
     @staticmethod
     def _validate_prod_config(app: Flask) -> None:
         """校验生产环境配置是否安全（非默认值）"""
@@ -100,7 +93,10 @@ class AppFactory:
         # 创建服务
         client = None
         push_service = None
-        if app.config['ENABLE_WECHAT_PUSH'] in ('1', 'true', 'True'):
+        # Pydantic settings will have boolean logic already applied if using bool type
+        # But app.config might hold the value. If from_object copied it, it's boolean.
+        # Verify: app.config['ENABLE_WECHAT_PUSH'] will be bool True/False from settings
+        if app.config.get('ENABLE_WECHAT_PUSH'):
             client = WeChatClient(
                 app.config['WECHAT_APP_ID'], 
                 app.config['WECHAT_APP_SECRET'],

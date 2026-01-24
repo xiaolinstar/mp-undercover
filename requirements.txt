@@ -24,3 +24,5 @@ wechatpy==1.8.18
 cryptography==44.0.0
 ruff==0.14.13
 python-dotenv==1.0.1
+pydantic==2.5.2
+pydantic-settings==2.1.0
