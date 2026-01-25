@@ -18,7 +18,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: web
-          image: mp-undercover:latest # 需要推送镜像到仓库后更新此行
+          image: ghcr.io/xiaolinstar/mp-undercover:latest # 需要推送镜像到仓库后更新此行
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
