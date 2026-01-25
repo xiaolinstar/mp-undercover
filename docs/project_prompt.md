@@ -183,7 +183,7 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "80:8000"
     environment:
       - REDIS_URL=redis://redis:6379/0
     depends_on:
@@ -400,17 +400,17 @@ if self.push_service:
 
 ```bash
 # 应用健康检查
-curl http://localhost:5000/health
+curl http://localhost:8000/health
 
 # Kubernetes 健康探针
 livenessProbe:
   httpGet:
     path: /health
-    port: 5000
+    port: 8000
 readinessProbe:
   httpGet:
     path: /health
-    port: 5000
+    port: 8000
 ```
 
 ### 2. 日志查看
