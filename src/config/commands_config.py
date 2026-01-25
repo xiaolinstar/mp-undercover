@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # 文本命令的可配置别名，便于后续扩展或国际化
 COMMAND_ALIASES = {

@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 消息服务类
 负责处理微信消息和响应
 """
 
 import logging
+
 from wechatpy import parse_message
-from wechatpy.utils import check_signature
-from wechatpy.replies import create_reply
 from wechatpy.exceptions import InvalidSignatureException
-from src.services.game_service import GameService
+from wechatpy.replies import create_reply
+from wechatpy.utils import check_signature
+
 from src.config.messages import HELP_MESSAGES
+from src.services.game_service import GameService
 from src.strategies.commands import CommandRouter
 
 logger = logging.getLogger(__name__)

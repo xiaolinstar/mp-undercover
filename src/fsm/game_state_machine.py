@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from enum import Enum
-from typing import Dict
-
 
 from src.exceptions import InvalidStateTransitionError
 
@@ -24,7 +21,7 @@ class GameEvent(Enum):
 
 class GameStateMachine:
     def __init__(self):
-        self.transitions: Dict[GameState, Dict[GameEvent, GameState]] = {
+        self.transitions: dict[GameState, dict[GameEvent, GameState]] = {
             GameState.WAITING: {
                 GameEvent.CREATE: GameState.WAITING,
                 GameEvent.JOIN: GameState.WAITING,

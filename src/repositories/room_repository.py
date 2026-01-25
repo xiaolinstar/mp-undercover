@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 房间仓储类
 负责房间数据的持久化操作
 """
 
 import json
+
 import redis
-from typing import Optional
-from src.models.room import Room
+
 from src.config.game_config import GameConfig
-from src.exceptions import (
-    RedisConnectionError,
-    SerializationError,
-    DataAccessError
-)
-from src.utils.logger import setup_logger, log_exception
+from src.exceptions import DataAccessError, RedisConnectionError, SerializationError
+from src.models.room import Room
+from src.utils.logger import log_exception, setup_logger
 
 logger = setup_logger(__name__)
 
@@ -64,7 +60,7 @@ class RoomRepository:
         except redis.ConnectionError as e:
             error = RedisConnectionError("保存房间", cause=e)
             log_exception(logger, error, {'room_id': room.room_id})
-            raise error
+            raise error from e
             
         except (TypeError, ValueError) as e:
             error = SerializationError(
@@ -74,7 +70,7 @@ class RoomRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
             
         except Exception as e:
             error = DataAccessError(
@@ -84,9 +80,9 @@ class RoomRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
     
-    def get(self, room_id: str) -> Optional[Room]:
+    def get(self, room_id: str) -> Room | None:
         """
         获取房间信息
         
@@ -122,7 +118,7 @@ class RoomRepository:
         except redis.ConnectionError as e:
             error = RedisConnectionError("获取房间", cause=e)
             log_exception(logger, error, {'room_id': room_id})
-            raise error
+            raise error from e
             
         except (TypeError, ValueError, KeyError) as e:
             error = SerializationError(
@@ -132,7 +128,7 @@ class RoomRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
             
         except Exception as e:
             error = DataAccessError(
@@ -142,7 +138,7 @@ class RoomRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
     
     def delete(self, room_id: str) -> None:
         """
@@ -163,7 +159,7 @@ class RoomRepository:
         except redis.ConnectionError as e:
             error = RedisConnectionError("删除房间", cause=e)
             log_exception(logger, error, {'room_id': room_id})
-            raise error
+            raise error from e
             
         except Exception as e:
             error = DataAccessError(
@@ -173,7 +169,7 @@ class RoomRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
     
     def exists(self, room_id: str) -> bool:
         """
@@ -198,7 +194,7 @@ class RoomRepository:
         except redis.ConnectionError as e:
             error = RedisConnectionError("检查房间存在性", cause=e)
             log_exception(logger, error, {'room_id': room_id})
-            raise error
+            raise error from e
             
         except Exception as e:
             error = DataAccessError(
@@ -208,4 +204,4 @@ class RoomRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e

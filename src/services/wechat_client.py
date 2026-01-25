@@ -1,6 +1,7 @@
+from redis import Redis
 from wechatpy import WeChatClient as BaseWeChatClient
 from wechatpy.session.redisstorage import RedisStorage
-from redis import Redis
+
 
 class WeChatClient:
     def __init__(self, app_id: str, app_secret: str, redis_client: Redis = None):

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 游戏配置类
 定义游戏的各种配置参数
 """
 
-from typing import Dict, Tuple, List
 
 
 class GameConfig:
@@ -21,14 +19,14 @@ class GameConfig:
     MIN_PLAYERS = 3
     
     # 卧底分配规则
-    UNDERCOVER_COUNT_RULES: Dict[Tuple[int, int], int] = {
+    UNDERCOVER_COUNT_RULES: dict[tuple[int, int], int] = {
         (3, 5): 1,   # 3-5人：1个卧底
         (6, 8): 2,   # 6-8人：2个卧底
         (9, 12): 3   # 9-12人：3个卧底
     }
     
     # 词语库
-    WORD_PAIRS: List[Tuple[str, str]] = [
+    WORD_PAIRS: list[tuple[str, str]] = [
         ('苹果', '香蕉'),
         ('夏天', '冬天'),
         ('篮球', '足球'),

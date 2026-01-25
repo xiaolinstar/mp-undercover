@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 游戏服务单元测试
 """
 
-import sys
 import os
+import sys
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')))
 
-import pytest
 from unittest.mock import Mock
-from src.services.game_service import GameService
+
+import pytest
+
 from src.models.room import Room, RoomStatus
 from src.models.user import User
+from src.services.game_service import GameService
 
 
 class TestGameService:

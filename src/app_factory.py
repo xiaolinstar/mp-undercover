@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 应用工厂
 负责创建和配置Flask应用
@@ -7,14 +6,15 @@
 
 import redis
 from flask import Flask
+
+from src.config.settings import settings
 from src.repositories.room_repository import RoomRepository
 from src.repositories.user_repository import UserRepository
 from src.services.game_service import GameService
 from src.services.message_service import MessageService
-from src.services.wechat_client import WeChatClient
 from src.services.push_service import PushService
+from src.services.wechat_client import WeChatClient
 from src.utils.logger import setup_logger
-from src.config.settings import settings
 
 
 class AppFactory:
@@ -67,7 +67,11 @@ class AppFactory:
                 missing_or_default.append(key)
         
         if missing_or_default:
-            error_msg = f"Production environment security check failed! The following configs are missing or using defaults: {', '.join(missing_or_default)}"
+            missing_str = ", ".join(missing_or_default)
+            error_msg = (
+                "Production environment security check failed! "
+                f"The following configs are missing or using defaults: {missing_str}"
+            )
             app.logger.error(error_msg)
             # 在生产环境下，配置不安全应该拒绝启动
             raise ValueError(error_msg)
@@ -110,8 +114,9 @@ class AppFactory:
     @staticmethod
     def _register_routes(app: Flask, message_service: MessageService) -> None:
         """注册路由"""
-        from flask import request, Response
         import time
+
+        from flask import Response, request
         
         @app.route('/', methods=['GET', 'POST'])
         def wechat():

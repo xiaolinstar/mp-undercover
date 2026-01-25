@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 词语生成器
 负责生成随机词语对
 """
 
 import random
-from typing import List, Tuple
 
 
 class WordGenerator:
     """词语生成器"""
     
-    def __init__(self, word_pairs: List[Tuple[str, str]]):
+    def __init__(self, word_pairs: list[tuple[str, str]]):
         self.word_pairs = word_pairs
     
-    def get_random_word_pair(self) -> Tuple[str, str]:
+    def get_random_word_pair(self) -> tuple[str, str]:
         """获取随机词语对"""
         return random.choice(self.word_pairs)
     
-    def get_word_pair_by_category(self, category: str) -> Tuple[str, str]:
+    def get_word_pair_by_category(self, category: str) -> tuple[str, str]:
         """根据类别获取词语对（预留功能）"""
         # 这里可以根据类别筛选词语对
         # 当前版本直接返回随机词语对

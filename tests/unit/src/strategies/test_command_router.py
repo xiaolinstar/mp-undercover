@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
+from src.config.messages import ERROR_MESSAGES, HELP_MESSAGES
 from src.strategies.commands import CommandRouter
-from src.config.messages import HELP_MESSAGES, ERROR_MESSAGES
 
 
 class StubGameService:

@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 用户仓储类
 负责用户数据的持久化操作
 """
 
 import json
+
 import redis
-from typing import Optional
+
+from src.exceptions import DataAccessError, RedisConnectionError, SerializationError
 from src.models.user import User
-from src.exceptions import (
-    RedisConnectionError,
-    SerializationError,
-    DataAccessError
-)
-from src.utils.logger import setup_logger, log_exception
+from src.utils.logger import log_exception, setup_logger
 
 logger = setup_logger(__name__)
 
@@ -56,7 +52,7 @@ class UserRepository:
         except redis.ConnectionError as e:
             error = RedisConnectionError("保存用户", cause=e)
             log_exception(logger, error, {'user_id': user.openid})
-            raise error
+            raise error from e
             
         except (TypeError, ValueError) as e:
             error = SerializationError(
@@ -66,7 +62,7 @@ class UserRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
             
         except Exception as e:
             error = DataAccessError(
@@ -76,9 +72,9 @@ class UserRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
     
-    def get(self, user_id: str) -> Optional[User]:
+    def get(self, user_id: str) -> User | None:
         """
         获取用户信息
         
@@ -114,7 +110,7 @@ class UserRepository:
         except redis.ConnectionError as e:
             error = RedisConnectionError("获取用户", cause=e)
             log_exception(logger, error, {'user_id': user_id})
-            raise error
+            raise error from e
             
         except (TypeError, ValueError, KeyError) as e:
             error = SerializationError(
@@ -124,7 +120,7 @@ class UserRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
             
         except Exception as e:
             error = DataAccessError(
@@ -134,7 +130,7 @@ class UserRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e
     
     def delete(self, user_id: str) -> None:
         """
@@ -155,7 +151,7 @@ class UserRepository:
         except redis.ConnectionError as e:
             error = RedisConnectionError("删除用户", cause=e)
             log_exception(logger, error, {'user_id': user_id})
-            raise error
+            raise error from e
             
         except Exception as e:
             error = DataAccessError(
@@ -165,4 +161,4 @@ class UserRepository:
                 cause=e
             )
             log_exception(logger, error)
-            raise error
+            raise error from e

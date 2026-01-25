@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 用户模型类
 定义用户的数据结构和相关操作
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Any
 
 
 @dataclass
@@ -14,9 +13,9 @@ class User:
     """用户模型"""
     openid: str
     nickname: str = ""
-    current_room: Optional[str] = None
+    current_room: str | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式，用于存储到Redis"""
         return {
             'openid': self.openid,
@@ -25,7 +24,7 @@ class User:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'User':
+    def from_dict(cls, data: dict[str, Any]) -> 'User':
         """从字典数据创建用户实例"""
         return cls(
             openid=data.get('openid', ''),

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 异常基础模块
 定义项目中所有异常的根基类及三大分类
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict
 
 
 @dataclass
@@ -17,8 +15,8 @@ class BaseAppException(Exception):
     """
     message: str                    # 用户友好的错误消息
     error_code: str                 # 唯一错误码 (格式: 模块-类型-序号)
-    details: Optional[Dict] = None  # 详细上下文信息 (用于日志，不展示给用户)
-    cause: Optional[Exception] = None  # 原始异常 (用于异常链)
+    details: dict | None = None  # 详细上下文信息 (用于日志，不展示给用户)
+    cause: Exception | None = None  # 原始异常 (用于异常链)
 
     def __str__(self) -> str:
         return f"[{self.error_code}] {self.message}"

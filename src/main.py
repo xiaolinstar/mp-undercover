@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 谁是卧底游戏主应用
 """
 import os
+
 from src.app_factory import AppFactory
 
 # 创建应用实例

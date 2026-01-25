@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 房间模型单元测试
 """
 
-import sys
 import os
+import sys
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')))
 
-import pytest
 import time
-from src.models.room import Room, RoomStatus
 from datetime import datetime
+
+import pytest
+
+from src.models.room import Room, RoomStatus
 
 
 class TestRoomModel:

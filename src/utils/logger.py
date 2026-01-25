@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 日志配置模块
 提供统一的日志配置和工具函数
@@ -8,10 +7,9 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
-from typing import Optional
 
 
-def setup_logger(name: str, log_level: Optional[str] = None) -> logging.Logger:
+def setup_logger(name: str, log_level: str | None = None) -> logging.Logger:
     """
     配置日志器
     
@@ -66,7 +64,7 @@ def setup_logger(name: str, log_level: Optional[str] = None) -> logging.Logger:
     return logger
 
 
-def log_exception(logger: logging.Logger, exception: Exception, context: Optional[dict] = None):
+def log_exception(logger: logging.Logger, exception: Exception, context: dict | None = None):
     """
     记录异常信息
     

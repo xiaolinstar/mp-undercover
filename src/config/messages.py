@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 游戏消息配置文件
 所有游戏中的回复消息都定义在这里，便于统一管理和调整
@@ -7,7 +6,11 @@
 
 # 房间相关消息
 ROOM_MESSAGES = {
-    "CREATE_SUCCESS": "房间创建成功！房间号：{room_id}\n请其他玩家输入'加入{room_id}'加入房间\n房主输入'开始'即可开始游戏",
+    "CREATE_SUCCESS": (
+        "房间创建成功！房间号：{room_id}\n"
+        "请其他玩家输入'加入{room_id}'加入房间\n"
+        "房主输入'开始'即可开始游戏"
+    ),
     "CREATE_ERROR": "创建房间失败，请稍后重试",
     
     "NOT_FOUND": "房间不存在，请检查房间号",
@@ -27,7 +30,11 @@ ROOM_MESSAGES = {
 
 # 游戏相关消息
 GAME_MESSAGES = {
-    "START_NOTIFICATION": "游戏开始！\n词语：{word}\n请根据您的词语进行描述，注意不要暴露自己的身份\n线下进行描述和讨论，结束后由房主进行最终投票决定胜负",
+    "START_NOTIFICATION": (
+        "游戏开始！\n词语：{word}\n"
+        "请根据您的词语进行描述，注意不要暴露自己的身份\n"
+        "线下进行描述和讨论，结束后由房主进行最终投票决定胜负"
+    ),
     "OWNER_REMINDER": "\n您是房主，请在线下游戏结束后，通过't+序号'的方式来决定被淘汰的玩家",
     
     "INVALID_INDEX": "无效的玩家序号",

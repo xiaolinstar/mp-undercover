@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 测试配置文件
 """
 
-import sys
 import os
+import sys
+
 import pytest
 
 # 添加项目根目录到Python路径

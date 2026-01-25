@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 服务端异常模块
 定义基础设施、数据层及外部系统相关的异常
 """
 
-from typing import Optional
+
 from src.exceptions.base import ServerException
 
 
@@ -40,7 +39,7 @@ class ExternalServiceException(ServerException):
 
 class WeChatAPIError(ExternalServiceException):
     """微信开放平台 API 调用失败"""
-    def __init__(self, message: str, cause: Optional[Exception] = None):
+    def __init__(self, message: str, cause: Exception | None = None):
         super().__init__(
             message=f"微信服务暂时不可用: {message}",
             error_code="SYS-EXTERNAL-002",
@@ -50,7 +49,7 @@ class WeChatAPIError(ExternalServiceException):
 
 class RedisConnectionError(ExternalServiceException):
     """Redis 数据库连接失败"""
-    def __init__(self, operation: str, cause: Optional[Exception] = None):
+    def __init__(self, operation: str, cause: Exception | None = None):
         super().__init__(
             message="系统数据连接失败",
             error_code="SYS-CONN-001",

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 房间模型类
 定义房间的数据结构和相关操作
 """
 
-from enum import Enum
-from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 
 class RoomStatus(Enum):
@@ -23,14 +22,14 @@ class Room:
     """房间模型"""
     room_id: str
     creator: str
-    players: List[str] = field(default_factory=list)
+    players: list[str] = field(default_factory=list)
     status: RoomStatus = RoomStatus.WAITING
-    words: Optional[Dict[str, str]] = None
-    undercovers: List[str] = field(default_factory=list)
+    words: dict[str, str] | None = None
+    undercovers: list[str] = field(default_factory=list)
     current_round: int = 1
-    eliminated: List[str] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    last_active: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    eliminated: list[str] = field(default_factory=list)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_active: datetime = field(default_factory=lambda: datetime.now(UTC))
     
     def __post_init__(self):
         """初始化后自动将创建者添加到玩家列表"""
@@ -39,7 +38,7 @@ class Room:
         elif self.creator not in self.players:
             self.players.insert(0, self.creator)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式，用于存储到Redis"""
         return {
             'room_id': self.room_id,
@@ -55,14 +54,14 @@ class Room:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Room':
+    def from_dict(cls, data: dict[str, Any]) -> 'Room':
         """从字典数据创建房间实例"""
         # 处理枚举类型
         status = RoomStatus(data.get('status', 'waiting'))
         
         # 处理时间戳
-        created_at = datetime.fromisoformat(data.get('created_at', datetime.now(timezone.utc).isoformat()))
-        last_active = datetime.fromisoformat(data.get('last_active', datetime.now(timezone.utc).isoformat()))
+        created_at = datetime.fromisoformat(data.get('created_at', datetime.now(UTC).isoformat()))
+        last_active = datetime.fromisoformat(data.get('last_active', datetime.now(UTC).isoformat()))
         
         return cls(
             room_id=data.get('room_id', ''),
@@ -93,10 +92,10 @@ class Room:
         """获取房间玩家数量"""
         return len(self.players)
     
-    def get_remaining_players(self) -> List[str]:
+    def get_remaining_players(self) -> list[str]:
         """获取剩余玩家列表"""
         return [player for player in self.players if player not in self.eliminated]
     
     def update_last_active(self) -> None:
         """更新最后活跃时间"""
-        self.last_active = datetime.now(timezone.utc)
+        self.last_active = datetime.now(UTC)

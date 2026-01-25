@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 游戏流程集成测试
 """
 
-import pytest
 import random
 from unittest.mock import Mock
+
+import pytest
+
 from src.repositories.room_repository import RoomRepository
 from src.repositories.user_repository import UserRepository
 from src.services.game_service import GameService

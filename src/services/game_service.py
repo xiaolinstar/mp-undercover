@@ -1,28 +1,37 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 游戏服务类
 实现游戏的核心业务逻辑
 """
 
 import random
-from typing import Optional, Tuple
+
+from src.config.game_config import GameConfig
+from src.exceptions import (
+    ClientException,
+    DomainException,
+    GameAlreadyStartedError,
+    GameEndedError,
+    GameNotStartedError,
+    InsufficientPlayersError,
+    InvalidPlayerIndexError,
+    PlayerEliminatedError,
+    RepositoryException,
+    RoomFullError,
+    RoomNotFoundError,
+    RoomPermissionError,
+    RoomStateError,
+    UserAlreadyInRoomError,
+    UserNotInRoomError,
+)
+from src.fsm.game_state_machine import GameEvent, GameState, GameStateMachine
 from src.models.room import Room, RoomStatus
 from src.models.user import User
 from src.repositories.room_repository import RoomRepository
 from src.repositories.user_repository import UserRepository
-from src.config.game_config import GameConfig
-from src.utils.word_generator import WordGenerator
-from src.fsm.game_state_machine import GameStateMachine, GameState, GameEvent
 from src.services.push_service import PushService
-from src.exceptions import (
-    RoomNotFoundError, RoomStateError, RoomFullError, RoomPermissionError,
-    GameNotStartedError, GameAlreadyStartedError, GameEndedError,
-    InsufficientPlayersError, PlayerEliminatedError, InvalidPlayerIndexError,
-    UserNotInRoomError, UserAlreadyInRoomError, RepositoryException, 
-    DomainException, ClientException
-)
-from src.utils.logger import setup_logger, log_exception, log_business_event
+from src.utils.logger import log_business_event, log_exception, setup_logger
+from src.utils.word_generator import WordGenerator
 
 logger = setup_logger(__name__)
 
@@ -30,14 +39,14 @@ logger = setup_logger(__name__)
 class GameService:
     """游戏服务类"""
     
-    def __init__(self, room_repo: RoomRepository, user_repo: UserRepository, push_service: Optional[PushService] = None):
+    def __init__(self, room_repo: RoomRepository, user_repo: UserRepository, push_service: PushService | None = None):
         self.room_repo = room_repo
         self.user_repo = user_repo
         self.word_generator = WordGenerator(GameConfig.WORD_PAIRS)
         self.fsm = GameStateMachine()
         self.push = push_service
     
-    def create_room(self, user_id: str) -> Tuple[bool, str]:
+    def create_room(self, user_id: str) -> tuple[bool, str]:
         """创建房间"""
         try:
             # 生成唯一的房间号
@@ -80,7 +89,7 @@ class GameService:
             log_exception(logger, e, {'user_id': user_id})
             return False, "创建房间时发生错误"
     
-    def join_room(self, user_id: str, room_id: str) -> Tuple[bool, str]:
+    def join_room(self, user_id: str, room_id: str) -> tuple[bool, str]:
         """加入房间"""
         try:
             # 检查房间是否存在
@@ -124,7 +133,11 @@ class GameService:
                     user.nickname = nickname
                     self.user_repo.save(user)
             
-            log_business_event(logger, "用户加入房间", user_id=user_id, room_id=room_id, player_count=room.get_player_count())
+            log_business_event(
+                logger, "用户加入房间", 
+                user_id=user_id, room_id=room_id, 
+                player_count=room.get_player_count()
+            )
             return True, f"成功加入房间，当前房间人数：{room.get_player_count()}"
             
         except (DomainException, ClientException) as e:
@@ -139,7 +152,7 @@ class GameService:
             log_exception(logger, e, {'user_id': user_id, 'room_id': room_id})
             return False, "加入房间时发生错误"
     
-    def start_game(self, user_id: str) -> Tuple[bool, str]:
+    def start_game(self, user_id: str) -> tuple[bool, str]:
         """开始游戏"""
         try:
             # 获取用户信息
@@ -226,7 +239,7 @@ class GameService:
             log_exception(logger, e, {'user_id': user_id})
             return False, "开始游戏时发生错误"
     
-    def show_word(self, user_id: str) -> Tuple[bool, str]:
+    def show_word(self, user_id: str) -> tuple[bool, str]:
         """显示词语"""
         try:
             # 获取用户信息
@@ -271,7 +284,7 @@ class GameService:
             log_exception(logger, e, {'user_id': user_id})
             return False, "显示词语时发生错误"
     
-    def vote_player(self, user_id: str, target_index: int) -> Tuple[bool, str]:
+    def vote_player(self, user_id: str, target_index: int) -> tuple[bool, str]:
         """投票淘汰玩家"""
         try:
             # 获取用户信息
@@ -345,7 +358,7 @@ class GameService:
             log_exception(logger, e, {'user_id': user_id})
             return False, "投票时发生错误"
     
-    def show_status(self, user_id: str) -> Tuple[bool, str]:
+    def show_status(self, user_id: str) -> tuple[bool, str]:
         """显示状态"""
         try:
             # 获取用户信息
@@ -421,7 +434,7 @@ class GameService:
             if not self.room_repo.exists(room_id):
                 return room_id
     
-    def _check_game_end(self, room: Room) -> Tuple[bool, str]:
+    def _check_game_end(self, room: Room) -> tuple[bool, str]:
         """检查游戏是否结束"""
         # 检查是否有卧底被淘汰
         eliminated_undercovers = set(room.undercovers) & set(room.eliminated)

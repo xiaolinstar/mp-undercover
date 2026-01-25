@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-from asyncio.log import logger
-from typing import List
-from src.services.game_service import GameService
-from src.config.commands_config import COMMAND_ALIASES
 import re
+from asyncio.log import logger
 
-from src.config.messages import HELP_MESSAGES, ERROR_MESSAGES
+from src.config.commands_config import COMMAND_ALIASES
+from src.config.messages import ERROR_MESSAGES, HELP_MESSAGES
+from src.services.game_service import GameService
 
 
 class CommandStrategy:
@@ -70,8 +68,16 @@ class StartGameCommand(CommandStrategy):
         if success:
             word_success, word_result = self.game_service.show_word(user_id)
             if word_success:
-                return f"游戏开始！\n{word_result}\n请根据您的词语进行描述，注意不要暴露自己的身份\n线下进行描述和讨论，结束后由房主进行最终投票决定胜负"
-            return "游戏开始成功！\n请根据您的词语进行描述，注意不要暴露自己的身份\n线下进行描述和讨论，结束后由房主进行最终投票决定胜负"
+                return (
+                    f"游戏开始！\n{word_result}\n"
+                    "请根据您的词语进行描述，注意不要暴露自己的身份\n"
+                    "线下进行描述和讨论，结束后由房主进行最终投票决定胜负"
+                )
+            return (
+                "游戏开始成功！\n"
+                "请根据您的词语进行描述，注意不要暴露自己的身份\n"
+                "线下进行描述和讨论，结束后由房主进行最终投票决定胜负"
+            )
         return result
 
 
@@ -99,7 +105,7 @@ class VoteCommand(CommandStrategy):
 class CommandRouter:
     def __init__(self, game_service: GameService):
         self.game_service = game_service
-        self.strategies: List[CommandStrategy] = [
+        self.strategies: list[CommandStrategy] = [
             HelpCommand(),
             CreateRoomCommand(game_service),
             JoinRoomCommand(game_service),
