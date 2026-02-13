@@ -13,12 +13,7 @@ import pytest
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')))
 
-from src.exceptions import (
-    # Client Exceptions
-    InvalidCommandError,
-    # Server Exceptions
-    RepositoryException
-)
+from src.exceptions import InvalidCommandError  # Client Exceptions
 from src.models.room import Room, RoomStatus
 from src.models.user import User
 from src.services.game_service import GameService
