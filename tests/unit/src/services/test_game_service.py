@@ -78,7 +78,8 @@ class TestGameService:
         # 创建模拟房间
         room = Room(room_id="1234", creator="user1", players=["user1"])
         
-        # 设置模拟行为
+        # 设置模拟行为 - 用户不在任何房间中
+        user_repo.get.return_value = None  # 用户尚未加入任何房间
         room_repo.get.return_value = room
         room_repo.save.return_value = True
         user_repo.save.return_value = True
@@ -99,7 +100,8 @@ class TestGameService:
         """测试加入不存在的房间"""
         room_repo, user_repo = mock_repos
         
-        # 设置模拟行为
+        # 设置模拟行为 - 用户不在任何房间中，房间不存在
+        user_repo.get.return_value = None  # 用户尚未加入任何房间
         room_repo.get.return_value = None  # 房间不存在
         
         # 调用被测试方法
@@ -117,7 +119,8 @@ class TestGameService:
         room = Room(room_id="1234", creator="user1", players=["user1"])
         room.status = RoomStatus.PLAYING
         
-        # 设置模拟行为
+        # 设置模拟行为 - 用户不在任何房间中
+        user_repo.get.return_value = None  # 用户尚未加入任何房间
         room_repo.get.return_value = room
         
         # 调用被测试方法

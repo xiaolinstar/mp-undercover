@@ -92,6 +92,12 @@ class GameService:
     def join_room(self, user_id: str, room_id: str) -> tuple[bool, str]:
         """加入房间"""
         try:
+            # 获取用户信息
+            user = self.user_repo.get(user_id)
+            if user and user.has_joined_room():
+                # 用户已经在其他房间中
+                raise UserAlreadyInRoomError(user_id, user.current_room)
+            
             # 检查房间是否存在
             room = self.room_repo.get(room_id)
             if not room:
@@ -116,12 +122,16 @@ class GameService:
             # 加入房间
             room.players.append(user_id)
             
-            # 创建用户对象
-            user = User(
-                openid=user_id,
-                nickname=f"玩家{room.get_player_count()}",
-                current_room=room_id
-            )
+            # 创建或更新用户对象
+            if not user:
+                user = User(
+                    openid=user_id,
+                    nickname=f"玩家{room.get_player_count()}",
+                    current_room=room_id
+                )
+            else:
+                user.current_room = room_id
+                user.nickname = f"玩家{room.get_player_count()}"
             
             # 保存房间和用户信息
             self.room_repo.save(room)

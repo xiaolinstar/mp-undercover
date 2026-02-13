@@ -10,6 +10,7 @@ from flask import Flask
 from src.config.settings import settings
 from src.repositories.room_repository import RoomRepository
 from src.repositories.user_repository import UserRepository
+from src.services.exception_handler import register_global_exception_handlers
 from src.services.game_service import GameService
 from src.services.message_service import MessageService
 from src.services.push_service import PushService
@@ -47,6 +48,9 @@ class AppFactory:
         app.user_repo = user_repo
         app.game_service = game_service
         app.message_service = message_service
+        
+        # 注册全局异常处理器
+        register_global_exception_handlers(app)
         
         return app
     

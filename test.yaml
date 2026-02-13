@@ -1,0 +1,13 @@
+# nginx-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80        # 服务端口
+      targetPort: 80 # 容器端口
+  type: LoadBalancer # 使用负载均衡器类型
